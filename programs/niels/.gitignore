@@ -1,0 +1,5 @@
+# ignore the generated text files
+*.txt
+
+# ignore the compiled file
+rsa_genkey_mprotect

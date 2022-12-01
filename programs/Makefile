@@ -134,6 +134,8 @@ APPS = \
 	x509/crl_app \
 	x509/load_roots \
 	x509/req_app \
+	niels/rsa_genkey_mprotect \
+## ADDED BY NIELS
 # End of APPS
 
 ifdef PTHREAD
@@ -270,6 +272,11 @@ pkey/pk_verify$(EXEXT): pkey/pk_verify.c $(DEP)
 pkey/rsa_genkey$(EXEXT): pkey/rsa_genkey.c $(DEP)
 	echo "  CC    pkey/rsa_genkey.c"
 	$(CC) $(LOCAL_CFLAGS) $(CFLAGS) pkey/rsa_genkey.c  $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@
+
+# ADDED BY NIELS
+niels/rsa_genkey_mprotect$(EXEXT): niels/rsa_genkey_mprotect.c $(DEP)
+	echo "  CC    niels/rsa_genkey_mprotect.c"
+	$(CC) $(LOCAL_CFLAGS) $(CFLAGS) niels/rsa_genkey_mprotect.c  $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@
 
 pkey/rsa_sign$(EXEXT): pkey/rsa_sign.c $(DEP)
 	echo "  CC    pkey/rsa_sign.c"

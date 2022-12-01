@@ -1,12 +1,14 @@
-README for Mbed TLS
-===================
+# FORK of Mbed TLS for academic exercise
+
+This repo is a fork of Mbed TLS. TODO CONTINUE WRITING
+
+# README for Mbed TLS
 
 Mbed TLS is a C library that implements cryptographic primitives, X.509 certificate manipulation and the SSL/TLS and DTLS protocols. Its small code footprint makes it suitable for embedded systems.
 
 Mbed TLS includes a reference implementation of the [PSA Cryptography API](#psa-cryptography-api). This is currently a preview for evaluation purposes only.
 
-Configuration
--------------
+## Configuration
 
 Mbed TLS should build out of the box on most systems. Some platform specific options are available in the fully documented configuration file `include/mbedtls/mbedtls_config.h`, which is also the place where features can be selected. This file can be edited manually, or in a more programmatic way using the Python 3 script `scripts/config.py` (use `--help` for usage instructions).
 
@@ -14,8 +16,7 @@ Compiler options can be set using conventional environment variables such as `CC
 
 We provide some non-standard configurations focused on specific use cases in the `configs/` directory. You can read more about those in `configs/README.txt`
 
-Documentation
--------------
+## Documentation
 
 The main Mbed TLS documentation is available via [ReadTheDocs](https://mbed-tls.readthedocs.io/).
 
@@ -29,8 +30,7 @@ To generate a local copy of the library documentation in HTML format, tailored t
 
 For other sources of documentation, see the [SUPPORT](SUPPORT.md) document.
 
-Compiling
----------
+## Compiling
 
 There are currently three active build systems used within Mbed TLS releases:
 
@@ -46,13 +46,13 @@ The Make and CMake build systems create three libraries: libmbedcrypto, libmbedx
 
 You need the following tools to build the library with the provided makefiles:
 
-* GNU Make 3.82 or a build tool that CMake supports.
-* A C99 toolchain (compiler, linker, archiver). We actively test with GCC 5.4, Clang 3.8, IAR 8 and Visual Studio 2013. More recent versions should work. Slightly older versions may work.
-* Python 3.6 to generate the test code, and to generate sample programs in the development branch.
-* Perl to run the tests, and to generate some source files in the development branch.
-* CMake 3.10.2 or later (if using CMake).
-* Microsoft Visual Studio 2013 or later (if using Visual Studio).
-* Doxygen 1.8.11 or later (if building the documentation; slightly older versions should work).
+-   GNU Make 3.82 or a build tool that CMake supports.
+-   A C99 toolchain (compiler, linker, archiver). We actively test with GCC 5.4, Clang 3.8, IAR 8 and Visual Studio 2013. More recent versions should work. Slightly older versions may work.
+-   Python 3.6 to generate the test code, and to generate sample programs in the development branch.
+-   Perl to run the tests, and to generate some source files in the development branch.
+-   CMake 3.10.2 or later (if using CMake).
+-   Microsoft Visual Studio 2013 or later (if using Visual Studio).
+-   Doxygen 1.8.11 or later (if building the documentation; slightly older versions should work).
 
 ### Generated source files in the development branch
 
@@ -60,22 +60,22 @@ The source code of Mbed TLS includes some files that are automatically generated
 
 The following tools are required:
 
-* Perl, for some library source files and for Visual Studio build files.
-* Python 3 and some Python packages, for some library source files, sample programs and test data. To install the necessary packages, run
+-   Perl, for some library source files and for Visual Studio build files.
+-   Python 3 and some Python packages, for some library source files, sample programs and test data. To install the necessary packages, run
     ```
     python -m pip install -r scripts/basic.requirements.txt
     ```
-* A C compiler for the host platform, for some test data.
+-   A C compiler for the host platform, for some test data.
 
 If you are cross-compiling, you must set the `CC` environment variable to a C compiler for the host platform when generating the configuration-independent files.
 
 Any of the following methods are available to generate the configuration-independent files:
 
-* If not cross-compiling, running `make` with any target, or just `make`, will automatically generate required files.
-* On non-Windows systems, when not cross-compiling, CMake will generate the required files automatically.
-* Run `make generated_files` to generate all the configuration-independent files.
-* On Unix/POSIX systems, run `tests/scripts/check-generated-files.sh -u` to generate all the configuration-independent files.
-* On Windows, run `scripts\make_generated_files.bat` to generate all the configuration-independent files.
+-   If not cross-compiling, running `make` with any target, or just `make`, will automatically generate required files.
+-   On non-Windows systems, when not cross-compiling, CMake will generate the required files automatically.
+-   Run `make generated_files` to generate all the configuration-independent files.
+-   On Unix/POSIX systems, run `tests/scripts/check-generated-files.sh -u` to generate all the configuration-independent files.
+-   On Windows, run `scripts\make_generated_files.bat` to generate all the configuration-independent files.
 
 ### Make
 
@@ -140,7 +140,7 @@ There are many different build modes available within the CMake buildsystem. Mos
 -   `Coverage`. This generates code coverage information in addition to debug information.
 -   `ASan`. This instruments the code with AddressSanitizer to check for memory errors. (This includes LeakSanitizer, with recent version of gcc and clang.) (With recent version of clang, this mode also instruments the code with UndefinedSanitizer to check for undefined behaviour.)
 -   `ASanDbg`. Same as ASan but slower, with debug information and better stack traces.
--   `MemSan`. This instruments the code with MemorySanitizer to check for uninitialised memory reads. Experimental, needs recent clang on Linux/x86\_64.
+-   `MemSan`. This instruments the code with MemorySanitizer to check for uninitialised memory reads. Experimental, needs recent clang on Linux/x86_64.
 -   `MemSanDbg`. Same as MemSan but slower, with debug information, better stack traces and origin tracking.
 -   `Check`. This activates the compiler warnings that depend on optimization and treats all warnings as errors.
 
@@ -153,8 +153,7 @@ To list other available CMake options, use:
     cmake -LH
 
 Note that, with CMake, you can't adjust the compiler or its flags after the
-initial invocation of cmake. This means that `CC=your_cc make` and `make
-CC=your_cc` will *not* work (similarly with `CFLAGS` and other variables).
+initial invocation of cmake. This means that `CC=your_cc make` and `make CC=your_cc` will _not_ work (similarly with `CFLAGS` and other variables).
 These variables need to be adjusted when invoking cmake for the first time,
 for example:
 
@@ -195,9 +194,9 @@ CMake projects. You can include Mbed TLS's CMake targets yourself with:
 If prompted, set `MbedTLS_DIR` to `${YOUR_MBEDTLS_INSTALL_DIR}/cmake`. This
 creates the following targets:
 
-- `MbedTLS::mbedcrypto` (Crypto library)
-- `MbedTLS::mbedtls` (TLS library)
-- `MbedTLS::mbedx509` (X509 library)
+-   `MbedTLS::mbedcrypto` (Crypto library)
+-   `MbedTLS::mbedtls` (TLS library)
+-   `MbedTLS::mbedx509` (X509 library)
 
 You can then use these directly through `target_link_libraries()`:
 
@@ -226,14 +225,12 @@ The solution file `mbedTLS.sln` contains all the basic projects needed to build 
 
 In the development branch of Mbed TLS, the Visual Studio solution files need to be generated first as described in [“Generated source files in the development branch”](#generated-source-files-in-the-development-branch).
 
-Example programs
-----------------
+## Example programs
 
 We've included example programs for a lot of different features and uses in [`programs/`](programs/README.md).
 Please note that the goal of these sample programs is to demonstrate specific features of the library, and the code may need to be adapted to build a real-world application.
 
-Tests
------
+## Tests
 
 Mbed TLS includes an elaborate test suite in `tests/` that initially requires Python to generate the tests files (e.g. `test\_suite\_mpi.c`). These files are generated from a `function file` (e.g. `suites/test\_suite\_mpi.function`) and a `data file` (e.g. `suites/test\_suite\_mpi.data`). The `function file` contains the test functions. The `data file` contains the test cases, specified as parameters that will be passed to the test function.
 
@@ -245,8 +242,7 @@ For machines with a Unix shell and OpenSSL (and optionally GnuTLS) installed, ad
 -   `tests/scripts/depends.py` test builds in configurations with a single curve, key exchange, hash, cipher, or pkalg on.
 -   `tests/scripts/all.sh` runs a combination of the above tests, plus some more, with various build options (such as ASan, full `mbedtls_config.h`, etc).
 
-Porting Mbed TLS
-----------------
+## Porting Mbed TLS
 
 Mbed TLS can be ported to many different architectures, OS's and platforms. Before starting a port, you may find the following Knowledge Base articles useful:
 
@@ -256,14 +252,13 @@ Mbed TLS can be ported to many different architectures, OS's and platforms. Befo
 
 Mbed TLS is mostly written in portable C99; however, it has a few platform requirements that go beyond the standard, but are met by most modern architectures:
 
-- Bytes must be 8 bits.
-- All-bits-zero must be a valid representation of a null pointer.
-- Signed integers must be represented using two's complement.
-- `int` and `size_t` must be at least 32 bits wide.
-- The types `uint8_t`, `uint16_t`, `uint32_t` and their signed equivalents must be available.
+-   Bytes must be 8 bits.
+-   All-bits-zero must be a valid representation of a null pointer.
+-   Signed integers must be represented using two's complement.
+-   `int` and `size_t` must be at least 32 bits wide.
+-   The types `uint8_t`, `uint16_t`, `uint32_t` and their signed equivalents must be available.
 
-PSA cryptography API
---------------------
+## PSA cryptography API
 
 ### PSA API
 
@@ -273,11 +268,11 @@ The [PSA cryptography API](https://arm-software.github.io/psa-api/crypto/) provi
 
 The design goals of the PSA cryptography API include:
 
-* The API distinguishes caller memory from internal memory, which allows the library to be implemented in an isolated space for additional security. Library calls can be implemented as direct function calls if isolation is not desired, and as remote procedure calls if isolation is desired.
-* The structure of internal data is hidden to the application, which allows substituting alternative implementations at build time or run time, for example, in order to take advantage of hardware accelerators.
-* All access to the keys happens through key identifiers, which allows support for external cryptoprocessors that is transparent to applications.
-* The interface to algorithms is generic, favoring algorithm agility.
-* The interface is designed to be easy to use and hard to accidentally misuse.
+-   The API distinguishes caller memory from internal memory, which allows the library to be implemented in an isolated space for additional security. Library calls can be implemented as direct function calls if isolation is not desired, and as remote procedure calls if isolation is desired.
+-   The structure of internal data is hidden to the application, which allows substituting alternative implementations at build time or run time, for example, in order to take advantage of hardware accelerators.
+-   All access to the keys happens through key identifiers, which allows support for external cryptoprocessors that is transparent to applications.
+-   The interface to algorithms is generic, favoring algorithm agility.
+-   The interface is designed to be easy to use and hard to accidentally misuse.
 
 Arm welcomes feedback on the design of the API. If you think something could be improved, please open an issue on our Github repository. Alternatively, if you prefer to provide your feedback privately, please email us at [`mbed-crypto@arm.com`](mailto:mbed-crypto@arm.com). All feedback received by email is treated confidentially.
 
@@ -292,24 +287,21 @@ The X.509 and TLS code can use PSA cryptography for most operations. To enable t
 
 Future releases of this library will include:
 
-* A driver programming interface, which makes it possible to use hardware accelerators instead of the default software implementation for chosen algorithms.
-* Support for external keys to be stored and manipulated exclusively in a separate cryptoprocessor.
-* A configuration mechanism to compile only the algorithms you need for your application.
-* A wider set of cryptographic algorithms.
+-   A driver programming interface, which makes it possible to use hardware accelerators instead of the default software implementation for chosen algorithms.
+-   Support for external keys to be stored and manipulated exclusively in a separate cryptoprocessor.
+-   A configuration mechanism to compile only the algorithms you need for your application.
+-   A wider set of cryptographic algorithms.
 
-License
--------
+## License
 
 Unless specifically indicated otherwise in a file, Mbed TLS files are provided under the [Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) license. See the [LICENSE](LICENSE) file for the full text of this license. Contributors must accept that their contributions are made under both the Apache-2.0 AND [GPL-2.0-or-later](https://spdx.org/licenses/GPL-2.0-or-later.html) licenses. This enables LTS (Long Term Support) branches of the software to be provided under either the Apache-2.0 OR GPL-2.0-or-later licenses.
 
-Contributing
-------------
+## Contributing
 
 We gratefully accept bug reports and contributions from the community. Please see the [contributing guidelines](CONTRIBUTING.md) for details on how to do this.
 
-Contact
--------
+## Contact
 
-* To report a security vulnerability in Mbed TLS, please email <mbed-tls-security@lists.trustedfirmware.org>. For more information, see [`SECURITY.md`](SECURITY.md).
-* To report a bug or request a feature in Mbed TLS, please [file an issue on GitHub](https://github.com/Mbed-TLS/mbedtls/issues/new/choose).
-* Please see [`SUPPORT.md`](SUPPORT.md) for other channels for discussion and support about Mbed TLS.
+-   To report a security vulnerability in Mbed TLS, please email <mbed-tls-security@lists.trustedfirmware.org>. For more information, see [`SECURITY.md`](SECURITY.md).
+-   To report a bug or request a feature in Mbed TLS, please [file an issue on GitHub](https://github.com/Mbed-TLS/mbedtls/issues/new/choose).
+-   Please see [`SUPPORT.md`](SUPPORT.md) for other channels for discussion and support about Mbed TLS.

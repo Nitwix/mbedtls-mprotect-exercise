@@ -2,7 +2,7 @@
  *  Modified Example RSA key generation program.
  *  The program is modified to show a possible "bad" behavior from a program,
  *  whose security implications can be mitigated by compartimentalizing the
- *  memory with mprotect.
+ *  memory with mprotect. For more info, see the README in the current directory.
  *
  *  Copyright The Mbed TLS Contributors
  *  SPDX-License-Identifier: Apache-2.0
@@ -51,16 +51,34 @@ int main(void)
 }
 #else
 
+/**
+ * In our scenario, the programmer wrote this function to print the *public*
+ * parameters to the stdout. However, he made a mistake and also printed the
+ * private key... We want to disallow this erroneous behavior.
+ */
+void malicious_print_public_params(mbedtls_rsa_context *rsa)
+{
+    mbedtls_mpi_write_file("N = ", &rsa->private_N, 16, NULL);
+    mbedtls_mpi_write_file("E = ", &rsa->private_E, 16, NULL);
+
+    // This is the "bad" behavior. We are printing the private key.
+    mbedtls_mpi_write_file("D = ", &rsa->private_D, 16, NULL);
+}
+
 int main(void)
 {
     int ret = 1;
     int exit_code = MBEDTLS_EXIT_FAILURE;
-    mbedtls_rsa_context rsa;
+    mbedtls_rsa_context *rsa = mbedtls_alloc_rsa_context();
+    if (rsa == NULL)
+    {
+        mbedtls_exit(-1);
+    }
+    // TODO modify rest of program
+
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_mpi N, P, Q, D, E, DP, DQ, QP;
-    FILE *fpub = NULL;
-    FILE *fpriv = NULL;
     const char *pers = "rsa_genkey";
 
     mbedtls_ctr_drbg_init(&ctr_drbg);
@@ -95,62 +113,13 @@ int main(void)
         mbedtls_printf(" failed\n  ! mbedtls_rsa_gen_key returned %d\n\n", ret);
         goto exit;
     }
+    mbedtls_printf(" ok\n");
 
-    mbedtls_printf(" ok\n  . Exporting the public  key in rsa_pub.txt....");
-    fflush(stdout);
-
-    if ((ret = mbedtls_rsa_export(&rsa, &N, &P, &Q, &D, &E)) != 0 ||
-        (ret = mbedtls_rsa_export_crt(&rsa, &DP, &DQ, &QP)) != 0)
-    {
-        mbedtls_printf(" failed\n  ! could not export RSA parameters\n\n");
-        goto exit;
-    }
-
-    if ((fpub = fopen("rsa_pub.txt", "wb+")) == NULL)
-    {
-        mbedtls_printf(" failed\n  ! could not open rsa_pub.txt for writing\n\n");
-        goto exit;
-    }
-
-    if ((ret = mbedtls_mpi_write_file("N = ", &N, 16, fpub)) != 0 ||
-        (ret = mbedtls_mpi_write_file("E = ", &E, 16, fpub)) != 0)
-    {
-        mbedtls_printf(" failed\n  ! mbedtls_mpi_write_file returned %d\n\n", ret);
-        goto exit;
-    }
-
-    mbedtls_printf(" ok\n  . Exporting the private key in rsa_priv.txt...");
-    fflush(stdout);
-
-    if ((fpriv = fopen("rsa_priv.txt", "wb+")) == NULL)
-    {
-        mbedtls_printf(" failed\n  ! could not open rsa_priv.txt for writing\n");
-        goto exit;
-    }
-
-    if ((ret = mbedtls_mpi_write_file("N = ", &N, 16, fpriv)) != 0 ||
-        (ret = mbedtls_mpi_write_file("E = ", &E, 16, fpriv)) != 0 ||
-        (ret = mbedtls_mpi_write_file("D = ", &D, 16, fpriv)) != 0 ||
-        (ret = mbedtls_mpi_write_file("P = ", &P, 16, fpriv)) != 0 ||
-        (ret = mbedtls_mpi_write_file("Q = ", &Q, 16, fpriv)) != 0 ||
-        (ret = mbedtls_mpi_write_file("DP = ", &DP, 16, fpriv)) != 0 ||
-        (ret = mbedtls_mpi_write_file("DQ = ", &DQ, 16, fpriv)) != 0 ||
-        (ret = mbedtls_mpi_write_file("QP = ", &QP, 16, fpriv)) != 0)
-    {
-        mbedtls_printf(" failed\n  ! mbedtls_mpi_write_file returned %d\n\n", ret);
-        goto exit;
-    }
-    mbedtls_printf(" ok\n\n");
+    malicious_print_public_params(&rsa);
 
     exit_code = MBEDTLS_EXIT_SUCCESS;
 
 exit:
-
-    if (fpub != NULL)
-        fclose(fpub);
-
-    if (fpriv != NULL)
-        fclose(fpriv);
 
     mbedtls_mpi_free(&N);
     mbedtls_mpi_free(&P);
@@ -166,5 +135,6 @@ exit:
 
     mbedtls_exit(exit_code);
 }
+
 #endif /* MBEDTLS_BIGNUM_C && MBEDTLS_ENTROPY_C && MBEDTLS_RSA_C && \
           MBEDTLS_GENPRIME && MBEDTLS_FS_IO && MBEDTLS_CTR_DRBG_C */

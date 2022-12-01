@@ -1,6 +1,8 @@
 # FORK of Mbed TLS for academic exercise
 
-This repo is a fork of Mbed TLS. TODO CONTINUE WRITING
+This repo is a fork of Mbed TLS. For more information see programs/niels/README.md
+
+original README:
 
 # README for Mbed TLS
 

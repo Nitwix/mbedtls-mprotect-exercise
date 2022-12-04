@@ -142,6 +142,15 @@ extern "C"
     mbedtls_rsa_context *mbedtls_alloc_rsa_context(void);
 
     /**
+     * Safely print the public parameters (e, N) to the stdout.
+     * e is the public exponent and N is the public RSA modulus.
+     * \param ctx The RSA context from which we will print the public parameters.
+     */
+    int mbedtls_safe_print_public_params(mbedtls_rsa_context *ctx);
+
+    ////////////////////////////////////////////////////////////////
+
+    /**
      * \brief          This function initializes an RSA context.
      *
      * \note           This function initializes the padding and the hash

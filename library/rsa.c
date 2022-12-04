@@ -79,15 +79,30 @@ mbedtls_rsa_context *mbedtls_alloc_rsa_context()
 {
     // see https://linux.die.net/man/3/memalign
     mbedtls_rsa_context *ctx = NULL;
-    // allocate the rsa context aligned to a page, so that we can mprotect it
+    // allocate the rsa context aligned to a page, so that we can mprotect it later
     // posix_memalign(void **memptr, size_t alignment, size_t size)
-    int ret = posix_memalign(&ctx, sysconf(_SC_PAGESIZE), sizeof(mbedtls_rsa_context));
+
+    // int ret = posix_memalign((void**) &ctx, sysconf(_SC_PAGESIZE), sizeof(mbedtls_rsa_context));
+    // There is a weird quirk I noticed when not allocating the whole page for the RSA context:
+    // if another part of the program (in my case it was printf) tries to call malloc, 
+    // it may allocate on the same page as the context, and thus cause a SIGSEGV because
+    // it tries to access memory that is protected by mprotect! 
+    // The fix I found is to allocate the whole page for the struct, even though it is not 
+    // needed. This way we avoid these strange interactions.
+    int ret = 0;
+    if((long int) sizeof(mbedtls_rsa_context) <= sysconf(_SC_PAGESIZE)){
+        ret = posix_memalign((void**) &ctx, sysconf(_SC_PAGESIZE), sysconf(_SC_PAGESIZE));
+    }else {
+        return NULL;
+    }
+
     if (ctx == NULL || ret != 0)
     {
         free(ctx);
         return NULL;
     }
 
+    // Enable memory protection on the rsa context
     // PROT_NONE: "The memory cannot be accessed at all. "
     ret = mprotect(ctx, sizeof(mbedtls_rsa_context), PROT_NONE);
     if (ret != 0)
@@ -97,6 +112,27 @@ mbedtls_rsa_context *mbedtls_alloc_rsa_context()
     }
 
     return ctx;
+}
+
+int mbedtls_safe_print_public_params(mbedtls_rsa_context *rsa)
+{
+    if(rsa == NULL){
+        return -1;
+    }
+
+    // Enable reading the rsa context
+    int mprot_ret = mprotect(rsa, sizeof(mbedtls_rsa_context), PROT_READ);
+    if(mprot_ret != 0){
+        return mprot_ret;
+    }
+
+    // print the *public* parameters to the standard output (NULL -> stdout)
+    mbedtls_mpi_write_file("N = ", &rsa->N, 16, NULL);
+    mbedtls_mpi_write_file("E = ", &rsa->E, 16, NULL);
+
+    // Re-enable memory protection
+    mprot_ret = mprotect(rsa, sizeof(mbedtls_rsa_context), PROT_NONE);
+    return mprot_ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -482,6 +518,16 @@ int mbedtls_rsa_export_crt(const mbedtls_rsa_context *ctx,
  */
 void mbedtls_rsa_init(mbedtls_rsa_context *ctx)
 {
+    // ADDED BY NIELS
+    // Enable writing to the context
+    // PROT_WRITE: "The memory can be modified."
+    int mprot_ret = mprotect(ctx, sizeof(mbedtls_rsa_context), PROT_WRITE);
+    if(mprot_ret != 0){
+        // there was an error
+        return;
+    }
+    /////////////////////////////
+
     memset(ctx, 0, sizeof(mbedtls_rsa_context));
 
     ctx->padding = MBEDTLS_RSA_PKCS_V15;
@@ -493,6 +539,11 @@ void mbedtls_rsa_init(mbedtls_rsa_context *ctx)
     ctx->ver = 1;
     mbedtls_mutex_init(&ctx->mutex);
 #endif
+
+    // ADDED BY NIELS
+    // Re-enable memory protection
+    mprotect(ctx, sizeof(mbedtls_rsa_context), PROT_NONE);
+    /////////////////////////////
 }
 
 /*
@@ -554,6 +605,15 @@ int mbedtls_rsa_gen_key(mbedtls_rsa_context *ctx,
                         void *p_rng,
                         unsigned int nbits, int exponent)
 {
+    // ADDED BY NIELS
+    // enable reading or writing the context
+    int mprot_ret = mprotect(ctx, sizeof(mbedtls_rsa_context), PROT_READ | PROT_WRITE);
+    if(mprot_ret != 0){
+        // there was an error
+        return mprot_ret;
+    }
+    //////////////////////////
+
     int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     mbedtls_mpi H, G, L;
     int prime_quality = 0;
@@ -657,6 +717,15 @@ cleanup:
             ret = MBEDTLS_ERROR_ADD(MBEDTLS_ERR_RSA_KEY_GEN_FAILED, ret);
         return (ret);
     }
+
+    // ADDED BY NIELS
+    // Re-enable memory protection
+    mprot_ret = mprotect(ctx, sizeof(mbedtls_rsa_context), PROT_NONE);
+    if(mprot_ret != 0){
+        // there was an error
+        return mprot_ret;
+    }
+    //////////////////////////////
 
     return (0);
 }
@@ -2281,6 +2350,16 @@ void mbedtls_rsa_free(mbedtls_rsa_context *ctx)
     if (ctx == NULL)
         return;
 
+    // ADDED BY NIELS
+    // Enable read/write on the ctx
+    int mprot_ret = mprotect(ctx, sizeof(mbedtls_rsa_context), PROT_READ | PROT_WRITE);
+    if(mprot_ret != 0){
+        // there was an error
+        return;
+    }
+    ///////////////////////////////
+
+
     mbedtls_mpi_free(&ctx->Vi);
     mbedtls_mpi_free(&ctx->Vf);
     mbedtls_mpi_free(&ctx->RN);
@@ -2306,6 +2385,14 @@ void mbedtls_rsa_free(mbedtls_rsa_context *ctx)
         ctx->ver = 0;
     }
 #endif
+
+    // ADDED BY NIELS
+    // because we now expect the context to be allocated on the heap, we need to free it back.
+    free(ctx);
+    // After this, the memory storing the ctx should be entirely clean
+    // and we don't need to mprotect it anymore.
+    ///////////////////////////////////////////////////////
+
 }
 
 #endif /* !MBEDTLS_RSA_ALT */

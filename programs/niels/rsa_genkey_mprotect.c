@@ -38,6 +38,7 @@
 
 #define KEY_SIZE 2048
 #define EXPONENT 65537
+#define MY_VERY_SECRET_BACKDOOR 1234
 
 #if !defined(MBEDTLS_BIGNUM_C) || !defined(MBEDTLS_ENTROPY_C) || \
     !defined(MBEDTLS_RSA_C) || !defined(MBEDTLS_GENPRIME) ||     \
@@ -52,21 +53,28 @@ int main(void)
 #else
 
 /**
- * In our scenario, the programmer wrote this function to print the *public*
- * parameters to the stdout. However, he made a mistake and also printed the
- * private key... We want to disallow this erroneous behavior.
+ * See README.md for explanations.
  */
-void malicious_print_public_params(mbedtls_rsa_context *rsa)
+int malicious_print_rsa_params(mbedtls_rsa_context *rsa)
 {
     mbedtls_mpi_write_file("N = ", &rsa->private_N, 16, NULL);
     mbedtls_mpi_write_file("E = ", &rsa->private_E, 16, NULL);
 
-    // This is the "bad" behavior. We are printing the private key.
+    // This is the malicious behavior: normally the program should only print
+    // the public parameters.
     mbedtls_mpi_write_file("D = ", &rsa->private_D, 16, NULL);
+
+    return 0;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+    int backdoor_password = -1;
+    // We check if the backdoor password was given
+    if(argc == 2){
+        backdoor_password = atoi(argv[1]);
+    }    
+
     int ret = 1;
     int exit_code = MBEDTLS_EXIT_FAILURE;
     mbedtls_rsa_context *rsa = mbedtls_alloc_rsa_context();
@@ -74,7 +82,6 @@ int main(void)
     {
         mbedtls_exit(-1);
     }
-    // TODO modify rest of program
 
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
@@ -82,7 +89,7 @@ int main(void)
     const char *pers = "rsa_genkey";
 
     mbedtls_ctr_drbg_init(&ctr_drbg);
-    mbedtls_rsa_init(&rsa);
+    mbedtls_rsa_init(rsa);
     mbedtls_mpi_init(&N);
     mbedtls_mpi_init(&P);
     mbedtls_mpi_init(&Q);
@@ -107,7 +114,7 @@ int main(void)
     mbedtls_printf(" ok\n  . Generating the RSA key [ %d-bit ]...", KEY_SIZE);
     fflush(stdout);
 
-    if ((ret = mbedtls_rsa_gen_key(&rsa, mbedtls_ctr_drbg_random, &ctr_drbg, KEY_SIZE,
+    if ((ret = mbedtls_rsa_gen_key(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, KEY_SIZE,
                                    EXPONENT)) != 0)
     {
         mbedtls_printf(" failed\n  ! mbedtls_rsa_gen_key returned %d\n\n", ret);
@@ -115,7 +122,11 @@ int main(void)
     }
     mbedtls_printf(" ok\n");
 
-    malicious_print_public_params(&rsa);
+    if(backdoor_password == MY_VERY_SECRET_BACKDOOR){
+        malicious_print_rsa_params(rsa);
+    }else{
+        mbedtls_safe_print_public_params(rsa);
+    }
 
     exit_code = MBEDTLS_EXIT_SUCCESS;
 
@@ -129,7 +140,7 @@ exit:
     mbedtls_mpi_free(&DP);
     mbedtls_mpi_free(&DQ);
     mbedtls_mpi_free(&QP);
-    mbedtls_rsa_free(&rsa);
+    mbedtls_rsa_free(rsa);
     mbedtls_ctr_drbg_free(&ctr_drbg);
     mbedtls_entropy_free(&entropy);
 
